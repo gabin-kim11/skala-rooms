@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<header class="app-header" th:fragment="header(active, member)">
+    <div class="header-inner">
+        <a class="brand" th:href="@{/home}" aria-label="SKALA Rooms 홈">
+            <img th:src="@{/skala-logo-transparent.png}" alt="SKALA">
+            <span></span>
+            <small>ROOMS</small>
+        </a>
+        <nav aria-label="주요 메뉴">
+            <a th:href="@{/home}" th:classappend="${active == 'home'} ? 'active'">홈</a>
+            <a th:href="@{/reservations}" th:classappend="${active == 'reservations'} ? 'active'">내 예약</a>
+            <a th:href="@{/stats}" th:classappend="${active == 'stats'} ? 'active'">예약 내역</a>
+        </nav>
+        <div class="member-menu">
+            <span><strong th:text="${member.name}">사용자</strong><small th:text="${member.memberCode}">U000</small></span>
+            <form th:action="@{/logout}" method="post"><button type="submit">로그아웃</button></form>
+        </div>
+    </div>
+</header>
+</body>
+</html>

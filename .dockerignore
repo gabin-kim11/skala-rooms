@@ -1,0 +1,13 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+.codex-backups
+.idea
+.vscode
+.mvn/apache-maven-*
+.mvn/repository
+target
+*.log
+uploads

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>홈 | SKALA Rooms</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script defer th:src="@{/js/booking.js}"></script>
+</head>
+<body>
+<main class="app-shell">
+    <div th:replace="~{fragments/header :: header(${active}, ${member})}"></div>
+
+    <section class="hero dashboard-hero">
+        <div><p class="kicker light">SKALA ULSAN · 2F</p><h1><span th:text="${member.name}">사용자</span>님,<br>오늘의 공간을 <em>빠르게 예약하세요.</em></h1><p class="hero-time">울산 교육관 2층 · 09:00~18:00</p></div>
+        <div class="summary-card"><p>나의 예약 기록</p><div><strong th:text="${summary.totalCount}">0</strong><small>전체 예약</small></div><div><strong th:text="${summary.completedCount}">0</strong><small>이용 후 인증</small></div><div><strong th:text="${#numbers.formatDecimal(summary.totalMinutes / 60.0, 1, 1)}">0.0</strong><small>이용 시간</small></div></div>
+    </section>
+
+    <section class="page-alerts">
+        <div class="alert success" th:if="${param.notice != null and param.notice[0] == 'cancelled'}">예약을 취소했습니다.</div>
+        <div class="alert error" th:if="${param.error != null and param.error[0] == 'cancel'}">이미 시작했거나 취소할 수 없는 예약입니다.</div>
+        <div class="alert error" th:if="${param.error != null and param.error[0] == 'overlap'}">이미 다른 교육생이 예약한 시간입니다.</div>
+        <div class="alert error" th:if="${param.error != null and param.error[0] == 'daily-limit'}">하루 예약 가능 시간은 최대 3시간입니다.</div>
+        <div class="alert error" th:if="${param.error != null and param.error[0] == 'past'}">이미 지난 시간은 예약할 수 없습니다.</div>
+        <div class="alert error" th:if="${param.error != null and param.error[0] == 'capacity'}">회의실 이용 인원은 최대 12명입니다.</div>
+        <div class="alert error" th:if="${param.error != null and param.error[0] == 'hours'}">09:00부터 18:00까지만 예약할 수 있습니다.</div>
+        <div class="alert error" th:if="${param.error != null and param.error[0] == 'invalid-reservation'}">예약 시간과 입력 내용을 다시 확인해주세요.</div>
+    </section>
+
+    <section class="content-section room-status-section">
+        <div class="section-head">
+            <div><p class="kicker">TODAY'S ROOMS</p><h2>회의실 예약 현황</h2><p th:text="${selectedDateLabel + ' · 교육시간 09:00~18:00'}">오늘 · 교육시간</p></div>
+            <form class="date-filter" th:action="@{/home}" method="get"><label for="scheduleDate">조회 날짜</label><input id="scheduleDate" name="scheduleDate" type="date" th:value="${selectedDate}" th:min="${today}" th:max="${maxDate}"><button type="submit">시간 확인</button></form>
+        </div>
+        <div class="room-grid">
+            <article class="room-card" th:each="view : ${roomViews}">
+                <div class="room-card-head"><span class="room-number" th:text="${view.room.roomCode}">201</span><div><h3 th:text="${view.room.name}">회의실</h3><p th:text="${view.room.floor + ' · 최대 ' + view.room.capacity + '명'}">교육관 2층</p></div><i class="room-state" th:text="${view.state}">사용 가능</i></div>
+                <div class="room-overview"><div><strong th:text="${view.bookings.size() + '건'}">0건</strong><span>예약 건수</span></div><div><strong th:text="${view.state}">사용 가능</strong><span>현재 상태</span></div><div><strong th:text="${view.nextTime}">없음</strong><span>다음 예약</span></div></div>
+                <div class="room-detail"><strong>예약 가능한 시간</strong><div class="chips"><span th:each="range : ${view.freeRanges}" th:text="${range}">09:00~18:00</span><small th:if="${view.freeRanges.isEmpty()}">남은 시간이 없습니다.</small></div></div>
+                <div class="room-detail booked"><strong>예약된 시간</strong><div class="booking-lines"><span th:each="booking : ${view.bookings}"><b th:text="${booking.range}">09:00~10:00</b><small>예약됨</small></span><small th:if="${view.bookings.isEmpty()}">예약된 시간이 없습니다.</small></div></div>
+            </article>
+        </div>
+    </section>
+
+    <section class="booking-workspace">
+        <div class="content-section booking-title"><div><p class="kicker">BOOKING WORKSPACE</p><h2>일정 확인과 바로 예약</h2></div><p>30분 단위로 연속된 시간을 선택하세요.</p></div>
+        <div class="content-section booking-layout">
+            <article class="schedule-panel" id="today-schedule">
+                <div class="panel-head"><div><p class="kicker">TODAY'S SCHEDULE</p><h2>오늘 예약 일정</h2></div><span th:text="${todayBookings.size() + '건'}">0건</span></div>
+                <div class="schedule-list" th:if="${!todayBookings.isEmpty()}">
+                    <div th:each="item : ${todayBookings}">
+                        <time th:text="${item.start}">09:00</time><span></span>
+                        <article>
+                            <div class="schedule-line-head"><b th:text="${item.roomCode + '호 · ' + item.start + '~' + item.end}">201호</b><em th:if="${item.mine}">내 예약</em></div>
+                            <h3 th:text="${item.title}">예약된 시간</h3>
+                            <p th:text="${item.detail}">예약 상세</p>
+                            <form class="schedule-cancel" th:if="${item.cancellable}" th:action="@{'/reservations/' + ${item.id} + '/cancel'}" method="post" onsubmit="return confirm('이 예약을 취소할까요?');"><input name="returnTo" type="hidden" value="home"><button class="danger-button" type="submit">예약 취소</button></form>
+                        </article>
+                    </div>
+                </div>
+                <div class="empty" th:if="${todayBookings.isEmpty()}"><strong>오늘은 아직 예약이 없어요.</strong><p>오른쪽에서 첫 예약을 진행해보세요.</p></div>
+            </article>
+
+            <aside class="booking-panel" id="booking">
+                <p class="kicker">BOOK A ROOM</p><h2>시간을 선택해 예약</h2><p>예약됐거나 지난 시간은 선택할 수 없습니다.</p>
+                <div class="limit-box"><span>선택한 날짜의 예약 시간</span><strong th:text="${usedMinutes + '분 / 180분'}">0분 / 180분</strong><i><b th:style="'width:' + ${usagePercent} + '%'"> </b></i><small th:text="${'추가로 ' + remainingMinutes + '분 예약 가능'}">추가 예약 가능</small></div>
+                <label class="booking-date">예약 날짜<input id="bookingDate" type="date" th:value="${selectedDate}" th:min="${today}" th:max="${maxDate}"></label>
+                <div class="room-tabs" role="tablist"><button type="button" th:each="view, status : ${roomViews}" th:classappend="${status.first} ? 'active'" th:attr="data-room-id=${view.room.id}" role="tab"><strong th:text="${view.room.roomCode + '호'}">201호</strong><span th:text="${'최대 ' + view.room.capacity + '명'}">12명</span></button></div>
+                <div class="time-head"><strong>시간 선택</strong><span>민트: 선택 가능 · 회색: 예약 불가</span></div>
+                <div class="time-grid" th:each="view, status : ${roomViews}" th:classappend="${status.first} ? 'active'" th:attr="data-room-id=${view.room.id}">
+                    <button type="button" th:each="slot : ${view.slots}" th:disabled="${slot.blocked}" th:attr="data-index=${slot.index},data-start=${slot.start},data-end=${slot.end}" th:text="${slot.start + '~' + slot.end}">09:00~09:30</button>
+                </div>
+                <form id="bookingForm" th:action="@{/reservations}" method="post" th:attr="data-max-slots=${maxSelectableSlots}">
+                    <input id="bookingRoomId" name="roomId" type="hidden" th:value="${roomViews[0].room.id}">
+                    <input name="date" type="hidden" th:value="${selectedDate}">
+                    <input id="bookingStart" name="startTime" type="hidden">
+                    <input id="bookingEnd" name="endTime" type="hidden">
+                    <div class="selection-summary"><span id="selectionText">시간을 선택해주세요.</span><strong id="selectionDuration">최대 3시간</strong></div>
+                    <label>이용 목적<input name="purpose" maxlength="160" placeholder="예: 프로젝트 조별 회의" required></label>
+                    <label>이용 인원<input name="peopleCount" type="number" min="1" max="12" value="2" required><small>회의실별 최대 12명</small></label>
+                    <button id="bookingSubmit" class="primary-button" type="submit" disabled>선택한 시간 예약하기 <span>→</span></button>
+                </form>
+            </aside>
+        </div>
+    </section>
+</main>
+</body>
+</html>

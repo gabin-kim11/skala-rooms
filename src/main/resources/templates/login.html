@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>로그인 | SKALA Rooms</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<main class="auth-shell">
+    <section class="auth-story">
+        <div class="auth-brand"><img th:src="@{/skala-logo-transparent.png}" alt="SKALA"><span>ROOMS</span></div>
+        <div><p class="kicker light">SKALA ULSAN · 2F</p><h1><span>필요한 순간,</span><em>빠르게 예약하세요.</em></h1></div>
+        <small>자율 예약 · 실시간 현황 · 이용 전후 인증</small>
+    </section>
+    <section class="auth-panel">
+        <div class="auth-card">
+            <p class="kicker">WELCOME BACK</p>
+            <h2>회의실 예약 시작하기</h2>
+            <p class="auth-copy">교육생 번호와 비밀번호를 입력해주세요.</p>
+            <div class="alert success" th:if="${param.notice != null and param.notice[0] == 'joined'}">회원가입이 완료됐습니다. 새 계정으로 로그인해주세요.</div>
+            <div class="alert success" th:if="${param.notice != null and param.notice[0] == 'logout'}">안전하게 로그아웃했습니다.</div>
+            <div class="alert error" th:if="${param.error != null}">교육생 번호 또는 비밀번호를 확인해주세요.</div>
+            <form class="stack-form" th:action="@{/login}" method="post">
+                <label>교육생 번호<input name="memberCode" placeholder="U000" autocomplete="username" required></label>
+                <label>비밀번호<input name="password" type="password" placeholder="8자 이상" autocomplete="current-password" required></label>
+                <button class="primary-button" type="submit">로그인 <span>→</span></button>
+            </form>
+            <div class="auth-divider"><span>처음 이용하시나요?</span></div>
+            <a class="secondary-button" th:href="@{/signup}">회원가입</a>
+        </div>
+    </section>
+</main>
+</body>
+</html>

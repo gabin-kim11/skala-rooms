@@ -1,0 +1,16 @@
+.mvn/apache-maven-*/
+.mvn/repository/
+target/
+.codex-backups/
+.classpath
+.project
+.settings/
+.vscode/
+.idea/
+*.iml
+.DS_Store
+.env
+.env.*
+!.env.example
+*.log
+uploads/
