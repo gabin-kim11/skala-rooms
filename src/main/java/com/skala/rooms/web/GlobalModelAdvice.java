@@ -2,6 +2,7 @@ package com.skala.rooms.web;
 
 import com.skala.rooms.member.Member;
 import java.security.Principal;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
@@ -15,7 +16,8 @@ public class GlobalModelAdvice {
     }
 
     @ModelAttribute("member")
-    public Member currentMember(Principal principal) {
-        return principal == null ? null : memberContext.require(principal);
+    public Member currentMember(Principal principal, HttpServletRequest request) {
+        if (principal == null || request.getRequestURI().startsWith("/google/onboarding")) return null;
+        return memberContext.require(principal);
     }
 }

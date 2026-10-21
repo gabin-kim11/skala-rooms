@@ -2,12 +2,12 @@ package com.skala.rooms.web;
 
 import com.skala.rooms.auth.AccountException;
 import com.skala.rooms.auth.AccountService;
-import com.skala.rooms.auth.PasswordPolicy;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.Principal;
 import java.util.Locale;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,31 +39,49 @@ public class AuthController {
     }
 
     @GetMapping("/signup")
-    public String signup(@RequestParam(required = false) String memberCode, Model model, Principal principal) {
+    public String signup(Principal principal) {
         if (principal != null) return "redirect:/home";
-        model.addAttribute("memberCode", memberCode == null ? "" : memberCode);
-        model.addAttribute("signupAccessCodeRequired", !signupAccessCode.isBlank());
-        return "signup";
+        return "redirect:/oauth2/authorization/google";
     }
 
-    @PostMapping("/signup")
-    public String createMember(
+    @GetMapping("/google/onboarding")
+    public String googleOnboarding(OAuth2AuthenticationToken authentication, Model model) {
+        if (authentication == null) return "redirect:/login";
+        model.addAttribute("googleEmail", authentication.getPrincipal().getAttribute("email"));
+        model.addAttribute("googleName", authentication.getPrincipal().getAttribute("name"));
+        model.addAttribute("signupAccessCodeRequired", !signupAccessCode.isBlank());
+        return "google-onboarding";
+    }
+
+    @PostMapping("/google/onboarding")
+    public String createGoogleMember(
+        OAuth2AuthenticationToken authentication,
         @RequestParam String memberCode,
         @RequestParam String name,
-        @RequestParam String password,
         @RequestParam(required = false) String accessCode
     ) {
-        if (!hasValidSignupAccessCode(accessCode)) return "redirect:/signup?error=access";
+        if (authentication == null) return "redirect:/login";
+        if (!hasValidSignupAccessCode(accessCode)) return "redirect:/google/onboarding?error=access";
         String normalizedCode = memberCode.trim().toUpperCase(Locale.ROOT);
         String normalizedName = name.trim();
-        if (!normalizedCode.matches("^U\\d{3,}$")) return "redirect:/signup?error=format";
-        if (normalizedName.isBlank() || normalizedName.length() > 80) return "redirect:/signup?error=required";
-        if (!PasswordPolicy.isValid(password)) return "redirect:/signup?error=password";
+        if (!normalizedCode.matches("^U\\d{3,}$")) return "redirect:/google/onboarding?error=format";
+        if (normalizedName.isBlank() || normalizedName.length() > 80) return "redirect:/google/onboarding?error=required";
+        String email = authentication.getPrincipal().getAttribute("email");
+        String subject = authentication.getPrincipal().getAttribute("sub");
+        Object verified = authentication.getPrincipal().getAttribute("email_verified");
+        if (email == null || subject == null || !Boolean.TRUE.equals(verified)) {
+            return "redirect:/login?error=google-email";
+        }
         try {
-            accounts.createMember(normalizedCode, normalizedName, password);
-            return "redirect:/login?notice=joined";
+            accounts.createGoogleMember(
+                normalizedCode,
+                normalizedName,
+                AccountService.normalizeEmail(email),
+                subject
+            );
+            return "redirect:/home";
         } catch (AccountException exception) {
-            return "redirect:/signup?error=" + exception.code();
+            return "redirect:/google/onboarding?error=" + exception.code();
         }
     }
 

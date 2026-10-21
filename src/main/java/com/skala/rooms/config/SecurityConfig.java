@@ -1,6 +1,7 @@
 package com.skala.rooms.config;
 
 import com.skala.rooms.auth.NodeScryptPasswordEncoder;
+import com.skala.rooms.auth.GoogleLoginSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.web.servlet.ServletListenerRegistrationBean;
@@ -30,11 +31,16 @@ public class SecurityConfig {
     }
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, SessionRegistry sessionRegistry) throws Exception {
+    SecurityFilterChain securityFilterChain(
+        HttpSecurity http,
+        SessionRegistry sessionRegistry,
+        GoogleLoginSuccessHandler googleLoginSuccessHandler
+    ) throws Exception {
         return http
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(
-                    "/", "/login", "/signup",
+                    "/", "/login", "/signup", "/terms", "/privacy",
+                    "/oauth2/**", "/login/oauth2/**",
                     "/css/**", "/js/**", "/skala-logo-transparent.png", "/error"
                 ).permitAll()
                 .anyRequest().authenticated()
@@ -46,6 +52,11 @@ public class SecurityConfig {
                 .passwordParameter("password")
                 .defaultSuccessUrl("/home", true)
                 .failureUrl("/login?error=invalid")
+            )
+            .oauth2Login(oauth -> oauth
+                .loginPage("/login")
+                .successHandler(googleLoginSuccessHandler)
+                .failureUrl("/login?error=google")
             )
             .logout(logout -> logout
                 .logoutUrl("/logout")

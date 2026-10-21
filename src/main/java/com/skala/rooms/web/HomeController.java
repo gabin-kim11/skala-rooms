@@ -9,6 +9,7 @@ import com.skala.rooms.room.Room;
 import com.skala.rooms.room.RoomRepository;
 import java.security.Principal;
 import java.time.Instant;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -69,6 +70,7 @@ public class HomeController {
         model.addAttribute("todayBookings", todayBookings.stream()
             .map(reservation -> ScheduleItem.from(reservation, member.memberCode(), now))
             .toList());
+        model.addAttribute("calendarTimes", calendarTimes());
         model.addAttribute("summary", summary);
         model.addAttribute("usedMinutes", usedMinutes);
         model.addAttribute("usagePercent", Math.min(100L, usedMinutes * 100L / 180L));
@@ -144,6 +146,14 @@ public class HomeController {
         return ranges;
     }
 
+    private List<String> calendarTimes() {
+        List<String> labels = new ArrayList<>();
+        for (int index = 0; index < 18; index++) {
+            labels.add(LocalTime.of(9, 0).plusMinutes(index * 30L).format(TIME));
+        }
+        return labels;
+    }
+
     public record TimeSlot(int index, String start, String end, boolean blocked) {
     }
 
@@ -171,10 +181,16 @@ public class HomeController {
         String title,
         String detail,
         boolean mine,
-        boolean cancellable
+        boolean cancellable,
+        int calendarColumn,
+        int calendarRow,
+        long slotSpan
     ) {
         static ScheduleItem from(ReservationView reservation, String currentMemberCode, Instant now) {
             boolean mine = reservation.memberCode().equals(currentMemberCode);
+            ZonedDateTime startsAt = reservation.startsAt().atZoneSameInstant(SkalaRoomsApplication.SEOUL);
+            long startMinutes = Duration.between(LocalTime.of(9, 0), startsAt.toLocalTime()).toMinutes();
+            long durationMinutes = Duration.between(reservation.startsAt(), reservation.endsAt()).toMinutes();
             return new ScheduleItem(
                 reservation.id(),
                 ViewFormats.time(reservation.startsAt()),
@@ -185,7 +201,10 @@ public class HomeController {
                     ? reservation.memberName() + " · " + reservation.memberCode() + " · " + reservation.peopleCount() + "명"
                     : "다른 교육생의 예약 · 상세 정보 비공개",
                 mine,
-                mine && reservation.startsAt().toInstant().isAfter(now)
+                mine && reservation.startsAt().toInstant().isAfter(now),
+                "201".equals(reservation.roomCode()) ? 2 : 3,
+                Math.toIntExact(Math.max(0, startMinutes / 30)) + 2,
+                Math.max(1, durationMinutes / 30)
             );
         }
     }

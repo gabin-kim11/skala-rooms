@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>교육생 정보 연결 | SKALA Rooms</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<main class="auth-shell onboarding-shell">
+    <section class="auth-story">
+        <div class="auth-brand"><img th:src="@{/skala-logo-transparent.png}" alt="SKALA"><span>ROOMS</span></div>
+        <div><p class="kicker light">ONE-TIME SETUP</p><h1><span>Google 계정과</span><em>교육생 정보를 연결합니다.</em></h1></div>
+        <small>Google 본인 확인 · 교육생 번호 중복 방지</small>
+    </section>
+    <section class="auth-panel">
+        <div class="auth-card">
+            <p class="kicker">ACCOUNT CONNECTION</p>
+            <h2>교육생 정보 연결</h2>
+            <p class="auth-copy"><strong th:text="${googleEmail}">email@example.com</strong> 계정으로 인증되었습니다.</p>
+            <div class="alert error" th:if="${param.error != null and param.error[0] == 'format'}">교육생 번호는 U000 형식으로 입력해주세요.</div>
+            <div class="alert error" th:if="${param.error != null and param.error[0] == 'duplicate'}">이미 연결된 교육생 번호 또는 Google 계정입니다.</div>
+            <div class="alert error" th:if="${param.error != null and param.error[0] == 'access'}">가입용 접근 코드를 확인해주세요.</div>
+            <div class="alert error" th:if="${param.error != null and param.error[0] == 'required'}">입력 내용을 다시 확인해주세요.</div>
+            <form class="stack-form" th:action="@{/google/onboarding}" method="post">
+                <label>교육생 번호<input name="memberCode" placeholder="U000" pattern="U[0-9]{3,}" autocomplete="username" required><small>본인의 교육생 번호를 입력해주세요.</small></label>
+                <label>이름<input name="name" th:value="${googleName}" maxlength="80" autocomplete="name" required></label>
+                <label th:if="${signupAccessCodeRequired}">가입용 접근 코드<input name="accessCode" type="password" placeholder="관리자에게 받은 코드" autocomplete="off" required></label>
+                <button class="primary-button" type="submit">계정 연결하고 시작하기 <span>→</span></button>
+            </form>
+            <footer class="policy-links"><a th:href="@{/terms}">이용약관</a><a th:href="@{/privacy}">개인정보처리방침</a></footer>
+        </div>
+    </section>
+</main>
+</body>
+</html>

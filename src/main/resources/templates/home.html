@@ -45,20 +45,26 @@
     <section class="booking-workspace">
         <div class="content-section booking-title"><div><p class="kicker">BOOKING WORKSPACE</p><h2>일정 확인과 바로 예약</h2></div><p>30분 단위로 연속된 시간을 선택하세요.</p></div>
         <div class="content-section booking-layout">
-            <article class="schedule-panel" id="today-schedule">
+            <article class="schedule-panel calendar-panel" id="today-schedule">
                 <div class="panel-head"><div><p class="kicker">TODAY'S SCHEDULE</p><h2>오늘 예약 일정</h2></div><span th:text="${todayBookings.size() + '건'}">0건</span></div>
-                <div class="schedule-list" th:if="${!todayBookings.isEmpty()}">
-                    <div th:each="item : ${todayBookings}">
-                        <time th:text="${item.start}">09:00</time><span></span>
-                        <article>
-                            <div class="schedule-line-head"><b th:text="${item.roomCode + '호 · ' + item.start + '~' + item.end}">201호</b><em th:if="${item.mine}">내 예약</em></div>
-                            <h3 th:text="${item.title}">예약된 시간</h3>
-                            <p th:text="${item.detail}">예약 상세</p>
-                            <form class="schedule-cancel" th:if="${item.cancellable}" th:action="@{'/reservations/' + ${item.id} + '/cancel'}" method="post" onsubmit="return confirm('이 예약을 취소할까요?');"><input name="returnTo" type="hidden" value="home"><button class="danger-button" type="submit">예약 취소</button></form>
+                <p class="calendar-help">시간대별로 두 회의실의 예약을 비교할 수 있습니다. 상세 내용은 본인 예약에만 표시됩니다.</p>
+                <div class="schedule-calendar-scroll" tabindex="0" aria-label="오늘 회의실 예약 시간표">
+                    <div class="schedule-calendar">
+                        <div class="calendar-corner" aria-hidden="true"></div>
+                        <strong class="calendar-room-head room-201">201호</strong>
+                        <strong class="calendar-room-head room-202">202호</strong>
+                        <div class="calendar-room-column room-201" aria-hidden="true"></div>
+                        <div class="calendar-room-column room-202" aria-hidden="true"></div>
+                        <time class="calendar-time" th:each="time, status : ${calendarTimes}" th:text="${time}" th:style="'grid-row:' + ${status.index + 2}">09:00</time>
+                        <article class="calendar-booking" th:each="item : ${todayBookings}" th:classappend="${item.mine} ? ' mine'" th:style="'grid-column:' + ${item.calendarColumn} + ';grid-row:' + ${item.calendarRow} + '/span ' + ${item.slotSpan}">
+                            <div><b th:text="${item.start + '~' + item.end}">09:00~10:00</b><em th:if="${item.mine}">내 예약</em></div>
+                            <strong th:text="${item.title}">예약된 시간</strong>
+                            <span th:text="${item.detail}">예약 상세</span>
+                            <form th:if="${item.cancellable}" th:action="@{'/reservations/' + ${item.id} + '/cancel'}" method="post" onsubmit="return confirm('이 예약을 취소할까요?');"><input name="returnTo" type="hidden" value="home"><button class="calendar-cancel" type="submit">취소</button></form>
                         </article>
                     </div>
                 </div>
-                <div class="empty" th:if="${todayBookings.isEmpty()}"><strong>오늘은 아직 예약이 없어요.</strong><p>오른쪽에서 첫 예약을 진행해보세요.</p></div>
+                <p class="calendar-empty" th:if="${todayBookings.isEmpty()}">오늘 등록된 예약이 없습니다.</p>
             </article>
 
             <aside class="booking-panel" id="booking">

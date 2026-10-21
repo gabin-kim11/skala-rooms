@@ -21,6 +21,14 @@ spring:
       mail.smtp.starttls.required: ${SMTP_STARTTLS:false}
   thymeleaf:
     cache: ${THYMELEAF_CACHE:false}
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:local-google-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:local-google-client-secret}
+            scope: openid,profile,email
   servlet:
     multipart:
       max-file-size: 5MB

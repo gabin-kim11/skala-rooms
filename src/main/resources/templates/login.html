@@ -15,19 +15,25 @@
     </section>
     <section class="auth-panel">
         <div class="auth-card">
-            <p class="kicker">WELCOME BACK</p>
+            <p class="kicker">SKALA ROOMS LOGIN</p>
             <h2>회의실 예약 시작하기</h2>
-            <p class="auth-copy">교육생 번호와 비밀번호를 입력해주세요.</p>
+            <p class="auth-copy">Google 계정으로 본인 확인 후 이용할 수 있습니다.</p>
             <div class="alert success" th:if="${param.notice != null and param.notice[0] == 'joined'}">회원가입이 완료됐습니다. 새 계정으로 로그인해주세요.</div>
             <div class="alert success" th:if="${param.notice != null and param.notice[0] == 'logout'}">안전하게 로그아웃했습니다.</div>
-            <div class="alert error" th:if="${param.error != null}">교육생 번호 또는 비밀번호를 확인해주세요.</div>
-            <form class="stack-form" th:action="@{/login}" method="post">
-                <label>교육생 번호<input name="memberCode" placeholder="U000" autocomplete="username" required></label>
-                <label>비밀번호<input name="password" type="password" placeholder="8자 이상" autocomplete="current-password" required></label>
-                <button class="primary-button" type="submit">로그인 <span>→</span></button>
-            </form>
-            <div class="auth-divider"><span>처음 이용하시나요?</span></div>
-            <a class="secondary-button" th:href="@{/signup}">회원가입</a>
+            <div class="alert error" th:if="${param.error != null and param.error[0] == 'google-email'}">확인된 이메일을 제공하는 Google 계정이 필요합니다.</div>
+            <div class="alert error" th:if="${param.error != null and param.error[0] == 'google'}">Google 로그인을 완료하지 못했습니다. 다시 시도해주세요.</div>
+            <div class="alert error" th:if="${param.error != null and param.error[0] == 'invalid'}">교육생 번호 또는 비밀번호를 확인해주세요.</div>
+            <a class="google-button" th:href="@{/oauth2/authorization/google}"><span class="google-mark" aria-hidden="true">G</span><strong>Google로 계속하기</strong></a>
+            <p class="oauth-note">처음 로그인하면 교육생 번호와 이름을 한 번만 연결합니다.</p>
+            <details class="legacy-login">
+                <summary>기존 교육생 번호로 로그인</summary>
+                <form class="stack-form" th:action="@{/login}" method="post">
+                    <label>교육생 번호<input name="memberCode" placeholder="U000" autocomplete="username" required></label>
+                    <label>비밀번호<input name="password" type="password" placeholder="8자 이상" autocomplete="current-password" required></label>
+                    <button class="secondary-button" type="submit">기존 계정 로그인</button>
+                </form>
+            </details>
+            <footer class="policy-links"><a th:href="@{/terms}">이용약관</a><a th:href="@{/privacy}">개인정보처리방침</a></footer>
         </div>
     </section>
 </main>

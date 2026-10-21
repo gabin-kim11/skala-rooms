@@ -58,6 +58,18 @@ public class AccountService {
         }
     }
 
+    public void createGoogleMember(String memberCode, String name, String email, String googleSubject) {
+        if (members.existsByCode(memberCode) || members.existsByEmail(email)) {
+            throw new AccountException("duplicate");
+        }
+        try {
+            String disabledPassword = passwordEncoder.encode(tokens.create());
+            members.createWithGoogle(memberCode, name, email, disabledPassword, googleSubject);
+        } catch (DuplicateKeyException exception) {
+            throw new AccountException("duplicate");
+        }
+    }
+
     public void requestSignup(String memberCode, String name, String email, String password) {
         if (!mail.isReady()) throw new AccountException("mail-unavailable");
         if (members.existsByCode(memberCode) || members.existsByEmail(email)) {

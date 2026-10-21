@@ -48,6 +48,22 @@ public class MemberRepository {
             .optional();
     }
 
+    public Optional<Member> findByGoogleSubject(String googleSubject) {
+        return jdbc.sql("""
+                SELECT id, member_code, name, password_hash
+                  FROM members
+                 WHERE google_subject = :googleSubject
+                """)
+            .param("googleSubject", googleSubject)
+            .query((rs, rowNum) -> new Member(
+                rs.getLong("id"),
+                rs.getString("member_code"),
+                rs.getString("name"),
+                rs.getString("password_hash")
+            ))
+            .optional();
+    }
+
     public boolean existsByCode(String memberCode) {
         return jdbc.sql("SELECT EXISTS (SELECT 1 FROM members WHERE member_code = :memberCode)")
             .param("memberCode", memberCode)
@@ -75,6 +91,35 @@ public class MemberRepository {
             .query(Long.class)
             .single();
         return new Member(id, memberCode, name, passwordHash);
+    }
+
+    public Member createWithGoogle(
+        String memberCode,
+        String name,
+        String email,
+        String passwordHash,
+        String googleSubject
+    ) throws DuplicateKeyException {
+        Long id = jdbc.sql("""
+                INSERT INTO members (member_code, name, email, password_hash, google_subject)
+                VALUES (:memberCode, :name, :email, :passwordHash, :googleSubject)
+                RETURNING id
+                """)
+            .param("memberCode", memberCode)
+            .param("name", name)
+            .param("email", email)
+            .param("passwordHash", passwordHash)
+            .param("googleSubject", googleSubject)
+            .query(Long.class)
+            .single();
+        return new Member(id, memberCode, name, passwordHash);
+    }
+
+    public void connectGoogle(long memberId, String googleSubject) {
+        jdbc.sql("UPDATE members SET google_subject = :googleSubject WHERE id = :memberId")
+            .param("googleSubject", googleSubject)
+            .param("memberId", memberId)
+            .update();
     }
 
     public void updatePassword(long memberId, String passwordHash) {
